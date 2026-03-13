@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class DetailDocumentDTO {
 
+    private Long requiredDocumentId;
+
     private Long studentDocumentId;
 
     private String documentName;

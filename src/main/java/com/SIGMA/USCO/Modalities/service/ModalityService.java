@@ -2977,6 +2977,7 @@ public class ModalityService {
 
         List<DetailDocumentDTO> documentDTOs = documents.stream()
                 .map(doc -> DetailDocumentDTO.builder()
+                        .requiredDocumentId(doc.getDocumentConfig().getId())
                         .studentDocumentId(doc.getId())
                         .documentName(doc.getDocumentConfig().getDocumentName())
                         .documentType(doc.getDocumentConfig().getDocumentType())
@@ -3563,6 +3564,7 @@ public class ModalityService {
                             StudentDocument uploaded = uploadedMap.get(req.getId());
 
                             return DetailDocumentDTO.builder()
+                                    .requiredDocumentId(req.getId())
                                     .studentDocumentId(
                                             uploaded != null ? uploaded.getId() : null
                                     )
@@ -3821,6 +3823,7 @@ public class ModalityService {
                         .map(req -> {
                             StudentDocument uploaded = uploadedMap.get(req.getId());
                             return DetailDocumentDTO.builder()
+                                    .requiredDocumentId(req.getId())
                                     .studentDocumentId(
                                             uploaded != null ? uploaded.getId() : null
                                     )
@@ -4050,6 +4053,7 @@ public class ModalityService {
                             StudentDocument uploaded = uploadedMap.get(req.getId());
 
                             return DetailDocumentDTO.builder()
+                                    .requiredDocumentId(req.getId())
                                     .studentDocumentId(
                                             uploaded != null ? uploaded.getId() : null
                                     )
@@ -4301,6 +4305,7 @@ public class ModalityService {
                             StudentDocument uploaded = uploadedMap.get(req.getId());
 
                             return DetailDocumentDTO.builder()
+                                    .requiredDocumentId(req.getId())
                                     .studentDocumentId(
                                             uploaded != null ? uploaded.getId() : null
                                     )
