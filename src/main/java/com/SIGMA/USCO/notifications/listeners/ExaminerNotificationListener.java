@@ -21,6 +21,7 @@ import com.SIGMA.USCO.notifications.event.DefenseScheduledEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,6 +42,7 @@ public class ExaminerNotificationListener {
     private final StudentModalityRepository studentModalityRepository;
     private final StudentModalityMemberRepository studentModalityMemberRepository;
 
+    @Async("notificationTaskExecutor")
     public void notifyExaminersAssignment(Long studentModalityId) {
         StudentModality modality = studentModalityRepository.findById(studentModalityId)
                 .orElseThrow(() -> new RuntimeException("Modalidad no encontrada"));

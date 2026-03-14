@@ -5,6 +5,8 @@ import com.SIGMA.USCO.notifications.entity.Notification;
 import com.SIGMA.USCO.notifications.repository.NotificationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationDispatcherService {
 
     private final NotificationRepository notificationRepository;
@@ -25,41 +28,49 @@ public class NotificationDispatcherService {
             default -> false;
         };
     }
+
     @Transactional
+    @Async("notificationTaskExecutor")
     public void dispatch(Notification notification) {
+        try {
+            if (shouldSendEmail(notification)) {
+                emailService.sendEmail(
+                        notification.getRecipient().getEmail(),
+                        notification.getSubject(),
+                        notification.getMessage()
+                );
 
-        if (shouldSendEmail(notification)) {
-
-            emailService.sendEmail(
-                    notification.getRecipient().getEmail(),
-                    notification.getSubject(),
-                    notification.getMessage()
-            );
-
-            notification.setEmailSent(true);
-            notification.setSentAt(LocalDateTime.now());
+                notification.setEmailSent(true);
+                notification.setSentAt(LocalDateTime.now());
+            }
+        } catch (Exception ex) {
+            log.error("Error enviando correo para notificación id={}", notification.getId(), ex);
+            notification.setEmailSent(false);
         }
 
         notification.setInAppDelivered(true);
-
         notificationRepository.save(notification);
     }
 
     @Transactional
+    @Async("notificationTaskExecutor")
     public void dispatchWithAttachment(Notification notification, Path attachmentPath, String attachmentName) {
+        try {
+            if (shouldSendEmail(notification)) {
+                emailService.sendEmailWithAttachment(
+                        notification.getRecipient().getEmail(),
+                        notification.getSubject(),
+                        notification.getMessage(),
+                        attachmentPath.toFile(),
+                        attachmentName
+                );
 
-        if (shouldSendEmail(notification)) {
-
-            emailService.sendEmailWithAttachment(
-                    notification.getRecipient().getEmail(),
-                    notification.getSubject(),
-                    notification.getMessage(),
-                    attachmentPath.toFile(),
-                    attachmentName
-            );
-
-            notification.setEmailSent(true);
-            notification.setSentAt(LocalDateTime.now());
+                notification.setEmailSent(true);
+                notification.setSentAt(LocalDateTime.now());
+            }
+        } catch (Exception ex) {
+            log.error("Error enviando correo con adjunto para notificación id={}", notification.getId(), ex);
+            notification.setEmailSent(false);
         }
 
         notification.setInAppDelivered(true);
