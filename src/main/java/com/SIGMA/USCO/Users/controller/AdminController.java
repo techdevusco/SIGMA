@@ -112,7 +112,7 @@ public class AdminController {
         return adminService.getPermissions();
     }
 
-    @Operation(summary = "Obtener usuarios", description = "Obtiene lista de usuarios con filtros opcionales")
+    @Operation(summary = "Obtener usuarios", description = "Obtiene lista de usuarios con filtros opcionales por estado, rol, programa académico, facultad, nombre, apellido y email")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de usuarios obtenida"),
             @ApiResponse(responseCode = "403", description = "Acceso denegado")
@@ -122,10 +122,13 @@ public class AdminController {
     public ResponseEntity<?> getUsers(
             @Parameter(description = "Filtrar por estado (ACTIVE, INACTIVE)") @RequestParam(required = false) String status,
             @Parameter(description = "Filtrar por nombre de rol") @RequestParam(required = false) String role,
-            @Parameter(description = "Filtrar por ID de programa académico") @RequestParam(required = false) Long academicProgramId,
-            @Parameter(description = "Filtrar por ID de facultad") @RequestParam(required = false) Long facultyId
+            @Parameter(description = "Filtrar por ID de programa académico") @RequestParam(required = false, name = "programId") Long academicProgramId,
+            @Parameter(description = "Filtrar por ID de facultad") @RequestParam(required = false) Long facultyId,
+            @Parameter(description = "Filtrar por nombre (búsqueda parcial)") @RequestParam(required = false) String name,
+            @Parameter(description = "Filtrar por apellido (búsqueda parcial)") @RequestParam(required = false) String lastName,
+            @Parameter(description = "Filtrar por email (búsqueda parcial)") @RequestParam(required = false) String email
     ) {
-        return adminService.getUsers(status, role, academicProgramId, facultyId);
+        return adminService.getUsers(status, role, academicProgramId, facultyId, name, lastName, email);
     }
 
     @Operation(summary = "Desactivar usuario", description = "Desactiva un usuario específico por su ID")

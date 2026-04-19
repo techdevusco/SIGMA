@@ -286,6 +286,20 @@ public class ModalityService {
 
         return ResponseEntity.ok("Requisito desactivado correctamente");
     }
+
+    public ResponseEntity<?> activeRequirement (Long requirementId){
+        ModalityRequirements requirement = modalityRequirementsRepository.findById(requirementId)
+                .orElseThrow(() -> new RuntimeException("Requisito no encontrado"));
+
+        requirement.setActive(true);
+        requirement.setUpdatedAt(LocalDateTime.now());
+
+        modalityRequirementsRepository.save(requirement);
+
+        return ResponseEntity.ok("Requisito activado correctamente");
+
+    }
+
     public ResponseEntity<List<ModalityDTO>> getAllModalities() {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

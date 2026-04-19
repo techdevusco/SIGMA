@@ -201,10 +201,10 @@ public class AdminService {
         );
     }
 
-    public ResponseEntity<?> getUsers(String status, String role, Long academicProgramId, Long facultyId) {
+    public ResponseEntity<?> getUsers(String status, String role, Long academicProgramId, Long facultyId, 
+                                       String name, String lastName, String email) {
 
         List<User> users;
-
 
         if (status == null || status.isBlank()) {
             users = userRepository.findAll();
@@ -219,7 +219,6 @@ public class AdminService {
             users = userRepository.findByStatus(userStatus);
         }
 
-
         if (role != null && !role.isBlank()) {
             final String roleNameUpper = role.toUpperCase();
             users = users.stream()
@@ -228,34 +227,73 @@ public class AdminService {
                     .toList();
         }
 
+        // Aplicar filtros de búsqueda por nombre, apellido y email
+        if (name != null && !name.isBlank()) {
+            final String searchName = name.toLowerCase();
+            users = users.stream()
+                    .filter(user -> user.getName().toLowerCase().contains(searchName))
+                    .toList();
+        }
 
-        List<UserResponse> userResponses = users.stream()
-                .map(user -> {
-                    String facultyName = null;
-                    String academicProgramName = null;
-                    Long userFacultyId = null;
-                    Long userAcademicProgramId = null;
+        if (lastName != null && !lastName.isBlank()) {
+            final String searchLastName = lastName.toLowerCase();
+            users = users.stream()
+                    .filter(user -> user.getLastName().toLowerCase().contains(searchLastName))
+                    .toList();
+        }
 
+        if (email != null && !email.isBlank()) {
+            final String searchEmail = email.toLowerCase();
+            users = users.stream()
+                    .filter(user -> user.getEmail().toLowerCase().contains(searchEmail))
+                    .toList();
+        }
 
-                    Optional<StudentProfile> studentProfile = studentProfileRepository.findByUserId(user.getId());
-                    if (studentProfile.isPresent()) {
-                        facultyName = studentProfile.get().getFaculty().getName();
-                        academicProgramName = studentProfile.get().getAcademicProgram().getName();
-                        userFacultyId = studentProfile.get().getFaculty().getId();
-                        userAcademicProgramId = studentProfile.get().getAcademicProgram().getId();
-                    } else {
+        List<UserResponse> userResponses = new ArrayList<>();
 
-                        List<ProgramAuthority> authorities = programAuthorityRepository.findByUser_Id(user.getId());
-                        if (!authorities.isEmpty()) {
-                            ProgramAuthority authority = authorities.get(0);
-                            academicProgramName = authority.getAcademicProgram().getName();
-                            facultyName = authority.getAcademicProgram().getFaculty().getName();
-                            userAcademicProgramId = authority.getAcademicProgram().getId();
-                            userFacultyId = authority.getAcademicProgram().getFaculty().getId();
-                        }
-                    }
+        for (User user : users) {
+            // Obtener todos los perfiles de autoridad del usuario
+            Optional<StudentProfile> studentProfile = studentProfileRepository.findByUserId(user.getId());
+            
+            if (studentProfile.isPresent()) {
+                // Si es estudiante, usar su programa académico
+                StudentProfile sp = studentProfile.get();
+                Long userFacultyId = sp.getFaculty().getId();
+                Long userAcademicProgramId = sp.getAcademicProgram().getId();
 
-                    return new Object[] {
+                // Aplicar filtros
+                if (facultyId != null && !userFacultyId.equals(facultyId)) {
+                    continue;
+                }
+                if (academicProgramId != null && !userAcademicProgramId.equals(academicProgramId)) {
+                    continue;
+                }
+
+                userResponses.add(
+                    UserResponse.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .lastname(user.getLastName())
+                            .email(user.getEmail())
+                            .status(user.getStatus())
+                            .roles(
+                                    user.getRoles().stream()
+                                            .map(Role::getName)
+                                            .collect(Collectors.toSet())
+                            )
+                            .faculty(sp.getFaculty().getName())
+                            .academicProgram(sp.getAcademicProgram().getName())
+                            .createdDate(user.getCreationDate())
+                            .build()
+                );
+            } else {
+                // Si no es estudiante, usar sus ProgramAuthority
+                List<ProgramAuthority> authorities = programAuthorityRepository.findByUser_Id(user.getId());
+                
+                if (authorities.isEmpty()) {
+                    // Usuario sin perfil de estudiante ni autoridades: mostrar sin facultad/programa
+                    if (facultyId == null && academicProgramId == null) {
+                        userResponses.add(
                             UserResponse.builder()
                                     .id(user.getId())
                                     .name(user.getName())
@@ -267,32 +305,47 @@ public class AdminService {
                                                     .map(Role::getName)
                                                     .collect(Collectors.toSet())
                                     )
-                                    .faculty(facultyName)
-                                    .academicProgram(academicProgramName)
+                                    .faculty(null)
+                                    .academicProgram(null)
                                     .createdDate(user.getCreationDate())
-                                    .build(),
-                            userFacultyId,
-                            userAcademicProgramId
-                    };
-                })
-                .filter(data -> {
-                    Long userFacultyId = (Long) data[1];
-                    Long userAcademicProgramId = (Long) data[2];
-
-
-                    if (facultyId != null && (userFacultyId == null || !userFacultyId.equals(facultyId))) {
-                        return false;
+                                    .build()
+                        );
                     }
+                } else {
+                    // Crear un UserResponse para CADA autoridad que coincida con los filtros
+                    for (ProgramAuthority authority : authorities) {
+                        Long userFacultyId = authority.getAcademicProgram().getFaculty().getId();
+                        Long userAcademicProgramId = authority.getAcademicProgram().getId();
 
+                        // Aplicar filtros
+                        if (facultyId != null && !userFacultyId.equals(facultyId)) {
+                            continue;
+                        }
+                        if (academicProgramId != null && !userAcademicProgramId.equals(academicProgramId)) {
+                            continue;
+                        }
 
-                    if (academicProgramId != null && (userAcademicProgramId == null || !userAcademicProgramId.equals(academicProgramId))) {
-                        return false;
+                        userResponses.add(
+                            UserResponse.builder()
+                                    .id(user.getId())
+                                    .name(user.getName())
+                                    .lastname(user.getLastName())
+                                    .email(user.getEmail())
+                                    .status(user.getStatus())
+                                    .roles(
+                                            user.getRoles().stream()
+                                                    .map(Role::getName)
+                                                    .collect(Collectors.toSet())
+                                    )
+                                    .faculty(authority.getAcademicProgram().getFaculty().getName())
+                                    .academicProgram(authority.getAcademicProgram().getName())
+                                    .createdDate(user.getCreationDate())
+                                    .build()
+                        );
                     }
-
-                    return true;
-                })
-                .map(data -> (UserResponse) data[0])
-                .toList();
+                }
+            }
+        }
 
         return ResponseEntity.ok(userResponses);
     }

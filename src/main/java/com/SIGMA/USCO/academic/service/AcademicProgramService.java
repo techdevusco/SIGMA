@@ -49,6 +49,7 @@ public class AcademicProgramService {
                 .code(request.getCode().toUpperCase())
                 .description(request.getDescription())
                 .faculty(faculty)
+                .totalCredits(request.getTotalCredits() != null ? request.getTotalCredits() : 0)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .active(true)

@@ -167,6 +167,12 @@ public class ModalityController {
         return modalityService.deleteRequirement(requirementId);
     }
 
+    @PutMapping("/requirements/active/{requirementId}")
+    @PreAuthorize("hasAuthority('PERM_DELETE_MODALITY_REQUIREMENT')")
+    public ResponseEntity<?> activeRequirements(@PathVariable Long requirementId) {
+        return modalityService.activeRequirement(requirementId);
+    }
+
 
     @Operation(summary = "Obtener todas las modalidades", description = "Retorna una lista completa de todas las modalidades de grado disponibles en el sistema, incluyendo activas e inactivas.")
     @ApiResponse(responseCode = "200", description = "Lista completa de modalidades obtenida")
