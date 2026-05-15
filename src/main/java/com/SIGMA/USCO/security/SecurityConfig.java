@@ -35,6 +35,7 @@ public class SecurityConfig {
                                 .requestMatchers("/swagger-ui.html").permitAll()
                                 .requestMatchers("/redoc.html").permitAll()
                                 .requestMatchers("/webjars/**").permitAll()
+                                .requestMatchers("/error").permitAll()
                                 .anyRequest().authenticated())
 
                 .sessionManagement(session -> session
